@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Local link to the ohne checkout
+.pnpmfile.cjs
+
+# Next
+.next/
+next-env.d.ts
+*.tsbuildinfo
+
+# Test runs
+tests/.chrome/
+tests/floor/app/
+tests/floor/components/
+tests/floor/lib/
+tests/floor/ohne.ts
+tests/floor/proxy.ts
+
+# OS
+.DS_Store
+
+# Claude
+.claude/

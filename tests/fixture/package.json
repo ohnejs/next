@@ -1,0 +1,16 @@
+{
+  "name": "fixture",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@ohnejs/next": "workspace:*",
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.0.0",
+    "@types/react": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}

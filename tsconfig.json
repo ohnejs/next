@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "allowJs": true,
+    "checkJs": true,
+    "lib": ["esnext", "dom"],
+    "types": ["node"],
+    "jsx": "react-jsx",
+    "strict": true,
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "erasableSyntaxOnly": true,
+    "noEmit": true,
+    "skipLibCheck": false
+  },
+  "include": ["index.d.ts", "client.d.ts", "tests/*.ts"]
+}

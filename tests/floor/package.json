@@ -1,0 +1,21 @@
+{
+  "name": "floor",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@ohnejs/next": "workspace:*",
+    "next": "16.0.0",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "26.0.0",
+    "@types/react": "19.0.14",
+    "typescript": "5.9.3"
+  },
+  "dependenciesMeta": {
+    "@ohnejs/next": {
+      "injected": true
+    }
+  }
+}

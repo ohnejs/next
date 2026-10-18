@@ -1,0 +1,15 @@
+packages:
+  - tests/fixture
+  - tests/floor
+
+allowBuilds:
+  sharp: false
+
+minimumReleaseAgeExclude:
+  - '@ohnejs/client'
+  - '@ohnejs/cms'
+
+packageExtensions:
+  next@16.0.0:
+    peerDependencies:
+      '@types/react': '*'
