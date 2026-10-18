@@ -8,6 +8,7 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@ohnejs/client'
   - '@ohnejs/cms'
+  - ohnejs
 
 packageExtensions:
   next@16.0.0:
