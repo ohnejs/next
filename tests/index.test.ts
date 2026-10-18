@@ -71,6 +71,17 @@ describe('proxy', () => {
   });
 });
 
+describe('current', () => {
+  it('refuses to run under `cacheComponents`, naming the fix', async () => {
+    process.env.__NEXT_CACHE_COMPONENTS = 'true';
+    try {
+      await assert.rejects(ohne.current(), /`cacheComponents` prevents/);
+    } finally {
+      delete process.env.__NEXT_CACHE_COMPONENTS;
+    }
+  });
+});
+
 describe('webhook', () => {
   const post = (signature?: string) =>
     new Request('http://site.test/api/ohne', {

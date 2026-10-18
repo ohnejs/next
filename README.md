@@ -48,7 +48,7 @@ Keep the `matcher` covering `/_ohne/`: the proxy serves the editor's script ther
 
 ## The page
 
-One catch-all page renders every path the CMS answers:
+One catch-all page renders every path the CMS answers, `/` included, so delete `app/page.tsx`:
 
 ```tsx
 // app/[[...slug]]/page.tsx
@@ -146,7 +146,7 @@ export default async function NotFound() {
 Keep it inside `[[...slug]]`. A root `not-found.tsx` that reads the request makes every page of the
 app dynamic. Its `<title>` is the layout's.
 
-Keep `cacheComponents` off, or redirects and misses answer `200`.
+Remove `cacheComponents` and `partialPrefetching` from `next.config.ts`: with them, redirects and misses answer `200`.
 
 Next renders this page in the browser: the server answers `404` with an almost empty body, so a
 crawler that runs no JavaScript sees no content

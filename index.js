@@ -52,6 +52,11 @@ export function createOhneNext({ api, revalidate }) {
 
   /** @returns {Promise<Current>} */
   async function current() {
+    if (process.env.__NEXT_CACHE_COMPONENTS) {
+      throw new Error(
+        '`@ohnejs/next` answers redirects and misses with their status, which `cacheComponents` prevents: remove it and `partialPrefetching` from `next.config.ts`',
+      );
+    }
     const address = (await headers()).get(ADDRESS);
     if (address === null) {
       throw new Error(
