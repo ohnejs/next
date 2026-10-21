@@ -12,6 +12,23 @@ const TOKEN = 'ohne-preview';
 const TAG = 'ohne';
 const PREVIEW = '/_ohne/cms/preview.js';
 const PASSED = ['cache-control', 'content-type'];
+const RSC = /^_rsc(=|$)/;
+
+/**
+ * `search` without Next's `_rsc` cache-buster, every other byte kept, since a raw bracket is structure.
+ * Next strips it itself unless `skipProxyUrlNormalize` hands the proxy the raw address.
+ *
+ * @param {string} search
+ * @returns {string}
+ */
+function withoutRSC(search) {
+  const query = search
+    .slice(1)
+    .split('&')
+    .filter((pair) => !RSC.test(pair))
+    .join('&');
+  return query && `?${query}`;
+}
 
 /**
  * @param {OhneNextOptions} options
@@ -105,7 +122,7 @@ export function createOhneNext({ api, revalidate }) {
       // Served from the site, so the API may stay private and never needs CORS.
       if (pathname === PREVIEW) return forward(`/cms/preview.js${search}`, { cache: 'no-store' });
       const forwarded = new Headers(request.headers);
-      forwarded.set(ADDRESS, pathname + search);
+      forwarded.set(ADDRESS, pathname + withoutRSC(search));
       const response = NextResponse.next({ request: { headers: forwarded } });
       if (searchParams.has(TOKEN)) {
         for (const [name, value] of Object.entries(client.previewHeaders()))

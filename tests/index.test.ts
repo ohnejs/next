@@ -24,6 +24,21 @@ describe('proxy', () => {
     assert.equal(response.headers.get('x-robots-tag'), null);
   });
 
+  it('drops the `_rsc` cache-buster from a raw address and keeps every other byte', async () => {
+    const response = await ohne.proxy(
+      new NextRequest('http://site.test/old?_rsc=x&tags=[a%2Cb,new]&_rsc&rsc=1'),
+    );
+    assert.equal(
+      response.headers.get('x-middleware-request-x-ohne-address'),
+      '/old?tags=[a%2Cb,new]&rsc=1',
+    );
+  });
+
+  it('drops a query that held only the cache-buster', async () => {
+    const response = await ohne.proxy(new NextRequest('http://site.test/about?_rsc=x'));
+    assert.equal(response.headers.get('x-middleware-request-x-ohne-address'), '/about');
+  });
+
   it('keeps a preview out of caches and search engines', async () => {
     const response = await ohne.proxy(new NextRequest('http://site.test/about?ohne-preview=t'));
     assert.equal(
