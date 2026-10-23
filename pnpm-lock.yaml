@@ -14,8 +14,8 @@ importers:
         specifier: 0.2.0
         version: 0.2.0
       '@ohnejs/cms':
-        specifier: 0.2.0
-        version: 0.2.0(ohnejs@0.2.0)
+        specifier: 0.3.1
+        version: 0.3.1(ohnejs@0.2.0)
       '@types/node':
         specifier: 26.0.0
         version: 26.0.0
@@ -527,11 +527,11 @@ packages:
     resolution: {integrity: sha512-a0T7bYEa/MnZMmOSTt5tafaUQOTsSpDoZOwbz0jqxv4m7zDyQWjd9mLk/ILi8HLpnb0K2fku6NTH/bgNjyLQ7A==}
     engines: {node: '>=20.0.0'}
 
-  '@ohnejs/cms@0.2.0':
-    resolution: {integrity: sha512-dWCNmAvU5oMVqBFU3NOtL4RSB0QKukQhVTylC2TeosBUKd52VPBAx8AQhqwXuIMGUBjNOeiRRcESIFhW+JEIDw==}
+  '@ohnejs/cms@0.3.1':
+    resolution: {integrity: sha512-UVzgUC24XvbhDN4IV4aO2f8FzK3rWXm5dQLty2Xz8hmfgZLD9D2pYF1VtBpvuCdZunqTqyL6C3mdIdk4ZR0r4g==}
     engines: {node: '>=26.0.0'}
     peerDependencies:
-      ohnejs: '>=0.2.0 <0.3.0-0'
+      ohnejs: '>=0.3.0 <0.5.0-0'
 
   '@ohnejs/next@file:':
     resolution: {directory: '', type: directory}
@@ -1379,7 +1379,7 @@ snapshots:
 
   '@ohnejs/client@0.2.0': {}
 
-  '@ohnejs/cms@0.2.0(ohnejs@0.2.0)':
+  '@ohnejs/cms@0.3.1(ohnejs@0.2.0)':
     dependencies:
       ohnejs: 0.2.0
 
