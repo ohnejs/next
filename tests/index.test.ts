@@ -86,6 +86,152 @@ describe('proxy', () => {
   });
 });
 
+describe('proxy in a live demo', () => {
+  const demo = createOhneNext({ api: 'http://api.test', sandbox: 'ohne_sandbox' });
+  const visit = (path: string, cookie?: string) =>
+    demo.proxy(new NextRequest(`http://site.test${path}`, cookie ? { headers: { cookie } } : {}));
+
+  it('asks search engines to skip every page, and keeps a bound one out of caches', async () => {
+    const unbound = await visit('/about');
+    assert.equal(unbound.headers.get('x-robots-tag'), 'noindex');
+    assert.equal(unbound.headers.get('cache-control'), null);
+    const bound = await visit('/about', 'session=secret; ohne_sandbox=copy-1');
+    assert.equal(bound.headers.get('x-robots-tag'), 'noindex');
+    assert.equal(bound.headers.get('cache-control'), 'private, no-store');
+  });
+
+  it('binds no visitor whose cookie is not a sandbox id', async () => {
+    for (const id of ['', 'a.b', 'a b', '%2e', 'x'.repeat(65)]) {
+      const response = await visit('/about', `ohne_sandbox=${id}`);
+      assert.equal(response.headers.get('cache-control'), null, id);
+    }
+  });
+
+  it('relays the sandbox routes with the binding cookie alone, and passes no cookie back', async () => {
+    const fetch = mock.method(globalThis, 'fetch', async () => {
+      const headers = {
+        'content-type': 'application/json',
+        'cache-control': 'no-store',
+        'set-cookie': 'ohne_sandbox=; Max-Age=0',
+      };
+      return new Response('{}', { headers });
+    });
+    const response = await demo.proxy(
+      new NextRequest('http://site.test/_ohne/sandbox', {
+        headers: { cookie: 'session=secret; ohne_sandbox=copy-1', authorization: 'Bearer x' },
+      }),
+    );
+    assert.deepEqual(fetch.mock.calls[0]?.arguments, [
+      'http://api.test/sandbox',
+      { cache: 'no-store', headers: { cookie: 'ohne_sandbox=copy-1' } },
+    ]);
+    assert.deepEqual(
+      [...response.headers],
+      [
+        ['cache-control', 'private, no-store'],
+        ['content-type', 'application/json'],
+      ],
+    );
+    await visit('/_ohne/sandbox/frame.js', 'ohne_sandbox=a.b');
+    assert.deepEqual(fetch.mock.calls[1]?.arguments, [
+      'http://api.test/sandbox/frame.js',
+      { cache: 'no-store', headers: {} },
+    ]);
+  });
+
+  it('treats the sandbox routes as pages on a real site', async () => {
+    const fetch = mock.method(globalThis, 'fetch');
+    for (const path of ['/_ohne/sandbox', '/_ohne/sandbox/frame.js']) {
+      const response = await ohne.proxy(
+        new NextRequest(`http://site.test${path}`, { headers: { cookie: 'ohne_sandbox=copy-1' } }),
+      );
+      assert.equal(response.headers.get('x-middleware-request-x-ohne-address'), path);
+      assert.equal(response.headers.get('x-robots-tag'), null);
+      assert.equal(response.headers.get('cache-control'), null);
+    }
+    assert.equal(fetch.mock.callCount(), 0);
+  });
+
+  it('reads `OHNE_SANDBOX` on each request', async () => {
+    const request = () => new NextRequest('http://site.test/about');
+    assert.equal((await ohne.proxy(request())).headers.get('x-robots-tag'), null);
+    process.env.OHNE_SANDBOX = 'ohne_sandbox';
+    try {
+      assert.equal((await ohne.proxy(request())).headers.get('x-robots-tag'), 'noindex');
+    } finally {
+      delete process.env.OHNE_SANDBOX;
+    }
+  });
+});
+
+describe('read and list', () => {
+  const settings = { UUID: 's', menu: [], copyright: 'Acme' };
+  const answer = (body: unknown, status = 200) =>
+    mock.method(globalThis, 'fetch', async () => Response.json(body, { status }));
+  const init = (fetch: ReturnType<typeof answer>) =>
+    fetch.mock.calls[0]?.arguments[1] as RequestInit & { next?: unknown };
+
+  it('reads under `revalidate`, tagged so `webhook` drops it, and never reads a cookie', async () => {
+    const cached = createOhneNext({ api: 'http://api.test', revalidate: 60 });
+    const fetch = answer(settings);
+    assert.deepEqual(await cached.read('Settings', { locale: 'en' }), settings);
+    assert.equal(
+      fetch.mock.calls[0]?.arguments[0],
+      'http://api.test/cms/records/Settings?locale=en',
+    );
+    assert.deepEqual(init(fetch).next, { revalidate: 60, tags: ['ohne'] });
+    assert.equal(init(fetch).cache, undefined);
+    assert.equal(new Headers(init(fetch).headers).has('cookie'), false);
+  });
+
+  it('lists a page of records, and reads every request without `revalidate`', async () => {
+    const page = { records: [], total: 0, page: 2, perPage: 3, lastPage: 1 };
+    const fetch = answer(page);
+    assert.deepEqual(
+      await ohne.list('Posts', { order: ['-publishedAt'], page: 2, perPage: 3 }),
+      page,
+    );
+    assert.equal(
+      fetch.mock.calls[0]?.arguments[0],
+      'http://api.test/cms/records/Posts?order=[-publishedAt]&page=2&perPage=3',
+    );
+    assert.equal(init(fetch).cache, 'no-store');
+  });
+
+  it('reads a record a visitor may not see as `undefined`', async () => {
+    answer({}, 404);
+    assert.equal(await ohne.read('Posts', '0192f0c4-0000-7000-8000-000000000001'), undefined);
+  });
+
+  it('reads the sandbox cookie in a live demo, warning once', async () => {
+    const warn = mock.method(console, 'warn', () => {});
+    const fetch = answer(settings);
+    process.env.OHNE_SANDBOX = 'ohne_sandbox';
+    try {
+      // Outside a Next request `cookies()` throws: reaching it proves the read asks for the binding.
+      await assert.rejects(ohne.read('Settings'), /`cookies` was called outside a request scope/);
+      await assert.rejects(ohne.read('Settings'), /`cookies` was called outside a request scope/);
+    } finally {
+      delete process.env.OHNE_SANDBOX;
+    }
+    assert.equal(fetch.mock.callCount(), 0);
+    assert.equal(warn.mock.callCount(), 1);
+    assert.match(String(warn.mock.calls[0]?.arguments[0]), /relays the `ohne_sandbox` cookie/);
+  });
+});
+
+describe('create', () => {
+  it("reads the visitor's address and language, which only a request carries", async () => {
+    const fetch = mock.method(globalThis, 'fetch');
+    // Outside a Next request `headers()` throws: reaching it proves a write asks for the visitor's.
+    await assert.rejects(
+      ohne.create('Messages', {}),
+      /`headers` was called outside a request scope/,
+    );
+    assert.equal(fetch.mock.callCount(), 0);
+  });
+});
+
 describe('current', () => {
   it('refuses to run under `cacheComponents`, naming the fix', async () => {
     process.env.__NEXT_CACHE_COMPONENTS = 'true';

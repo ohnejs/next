@@ -3,7 +3,7 @@ import { cpSync, readFileSync, realpathSync, rmSync } from 'node:fs';
 import { after, before, describe, it } from 'node:test';
 
 import { startAPI } from './api.ts';
-import { cache, probe } from './probes.ts';
+import { cache, form, probe } from './probes.ts';
 import { build, start } from './site.ts';
 
 const ROOT = new URL('../', import.meta.url).pathname;
@@ -44,11 +44,14 @@ describe('the oldest Next and React the peers allow', () => {
     }
     assert.match(output, /Next\.js 16\.0\.0/);
     assert.match(output, /○ \/legal/);
+    assert.match(output, /○ \/contact/);
     assert.match(output, /ƒ \/robots\.txt/);
     assert.match(output, /ƒ \/sitemap\.xml/);
   });
 
   probe(() => ({ api, origin: site.origin }));
 });
+
+describe('a form', () => form(FLOOR, () => ({ api, origin: site.origin, log: site.log })));
 
 describe('caching on the oldest Next', () => cache(FLOOR, () => api));

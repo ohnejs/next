@@ -1,6 +1,7 @@
 import { OhneBlocks } from '@ohnejs/next';
 
 import { Hero } from '../../components/hero';
+import { Posts } from '../../components/posts';
 import { Text } from '../../components/text';
 import { ohne } from '../../lib/ohne';
 
@@ -11,7 +12,7 @@ export default async function Page() {
   return (
     <main lang={page.locale}>
       <h1>{page.record.title}</h1>
-      <OhneBlocks blocks={page.record.content} components={{ Hero, Text }} />
+      <OhneBlocks blocks={page.record.content} components={{ Hero, Posts, Text }} />
     </main>
   );
 }

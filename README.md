@@ -109,6 +109,116 @@ export function Hero({ fields }: Block<'Hero'>) {
 A block the CMS adds fails the typecheck until it has a component. A block that arrives before your
 next build renders nothing. A block's component may be async.
 
+## Site data
+
+A layout or a component reads [site data](https://ohne.dev/docs/cms/website#site-data) with
+`ohne.read` and `ohne.list`:
+
+```tsx
+// app/[[...slug]]/layout.tsx
+import { OhneLink } from '@ohnejs/next/client';
+
+import { ohne } from '../../lib/ohne';
+
+export default async function SiteLayout({ children }: LayoutProps<'/[[...slug]]'>) {
+  const settings = await ohne.read('Settings');
+  return (
+    <>
+      <nav>
+        {settings.menu.map((item) => (
+          <OhneLink key={item.label} link={item.link}>
+            {item.label}
+          </OhneLink>
+        ))}
+      </nav>
+      {children}
+      <footer>{settings.copyright}</footer>
+    </>
+  );
+}
+```
+
+Reads are cached like the page's, and the webhook drops them with it. Records read in your default
+locale unless you pass `locale`.
+
+Only a page receives `searchParams`. A block reads the query with `ohne.searchParams()` instead,
+like a page number for its list:
+
+```ts
+const page = Number((await ohne.searchParams()).get('page')) || 1;
+const posts = await ohne.list('Posts', { order: ['-publishedAt'], page });
+```
+
+A layout must not read the query: Next keeps a layout as first rendered when only the query
+changes.
+
+## Forms
+
+A form creates a record in a collection your CMS opens to
+[visitors](https://ohne.dev/docs/cms/website#forms). Send it from a Server Action with
+`ohne.create`:
+
+```ts
+// app/contact/actions.ts
+'use server';
+
+import type { Creatable } from '../../ohne';
+
+import { ohne } from '../../lib/ohne';
+
+export async function sendMessage(message: Creatable['Messages'], token: string) {
+  return ohne.create('Messages', message, { headers: { 'recaptcha-token': token } });
+}
+```
+
+The header carries a spam check's token, like the one a reCAPTCHA widget adds to the form, to the
+middleware on the API that reads it. A create is never cached.
+
+The action answers `{ ok: true, UUID }`, or `{ ok: false, status, message, errors }` when the API
+refuses the input. `errors` holds a message per invalid field, so a Client Component shows each one
+beside its input:
+
+```tsx
+// components/contact-form.tsx
+'use client';
+
+import { useState } from 'react';
+
+import { sendMessage } from '../app/contact/actions';
+
+export function ContactForm() {
+  const [errors, setErrors] = useState<Partial<Record<string, string>>>({});
+  const [sent, setSent] = useState(false);
+
+  async function send(form: FormData) {
+    const field = (name: string) => String(form.get(name));
+    const message = { name: field('name'), email: field('email'), message: field('message') };
+    const result = await sendMessage(message, field('g-recaptcha-response'));
+    if (result.ok) setSent(true);
+    else setErrors(result.errors);
+  }
+
+  if (sent) return <p>Thanks!</p>;
+  return (
+    <form action={send}>
+      <input name="name" />
+      <input name="email" />
+      {errors.email && <p>{errors.email}</p>}
+      <textarea name="message" />
+      <button>Send</button>
+    </form>
+  );
+}
+```
+
+Any other failure throws inside the action, like a collection visitors may not create in.
+
+Each create passes the visitor's address and language on, so the API answers in their language. To
+give each visitor their own rate limit, list your site's server in
+[`api.trustProxy`](https://ohne.dev/docs/production/deployment#behind-a-proxy). Do that only behind
+a proxy that sets `X-Forwarded-For`, like your host's: a Next server facing the internet directly
+passes on whatever address a visitor claims.
+
 ## Rich text and links
 
 `OhneRichText` renders a `richText` field in a `<div>`, escaping every text and address. Clicks on

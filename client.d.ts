@@ -6,7 +6,8 @@ import type { AnchorHTMLAttributes, HTMLAttributes, ReactNode } from 'react';
  * Connects the site to the ohne editor that frames it.
  * On each change, it renders the page again on the server.
  * Render it once, in the root layout: the editor's script keeps one connection per page.
- * Outside the editor's frame, or without a preview token in the address, it does nothing.
+ * In a live demo's frame, named `ohne-sandbox`, it renders the page again when the visitor's copy changes.
+ * Anywhere else it does nothing.
  *
  * @example
  * ```tsx

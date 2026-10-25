@@ -22,6 +22,18 @@ export interface OhneNextOptions {
    * So this is the longest a page stays stale.
    */
   revalidate?: number;
+
+  /**
+   * The cookie that binds a visitor to a sandbox copy of the API, set only for a live demo.
+   * Every read and create relays that one cookie to the API, so a page shows the visitor's copy.
+   * Every page then answers `noindex`, and a read with the cookie skips the data cache.
+   * Set it for `next build` too: a page the build prerendered shows every visitor the same copy.
+   * Never set it on a real site.
+   *
+   * @default
+   * process.env.OHNE_SANDBOX
+   */
+  sandbox?: string;
 }
 
 /**
@@ -72,7 +84,8 @@ export interface OhneNext<S extends Schema = UntypedSchema> {
 
   /**
    * Resolves the address of the current request without acting on the answer.
-   * Reach for it in a layout or `not-found.tsx`, which receive neither the path nor the query.
+   * Reach for it in `not-found.tsx`, which receives neither the path nor the query.
+   * A layout must not: Next keeps it as first rendered when only the query or a deeper path changes.
    * It throws when `proxy` did not run, and a failed request throws, so Next answers `500`.
    */
   current(): Promise<Current<S>>;
@@ -85,9 +98,35 @@ export interface OhneNext<S extends Schema = UntypedSchema> {
   page(): Promise<Loaded<S>>;
 
   /**
+   * `client.read` under the adapter's caching, and bound to the visitor's sandbox copy in a demo.
+   */
+  read: Ohne<S>['read'];
+
+  /**
+   * `client.list` under the adapter's caching, and bound to the visitor's sandbox copy in a demo.
+   */
+  list: Ohne<S>['list'];
+
+  /**
+   * `client.create` for a Server Action or a route handler, never cached.
+   * In a demo it is bound to the visitor's sandbox copy, as `read` is.
+   * It passes on the visitor's address and language, so the API's rate limits and messages fit the visitor.
+   * A header the caller sets in `options.headers` wins.
+   */
+  create: Ohne<S>['create'];
+
+  /**
+   * The query of the address the visitor asked for.
+   * A block reads it here, since only a page receives `searchParams`.
+   * A layout must not: Next keeps it as first rendered when only the query changes.
+   * It throws when `proxy` did not run.
+   */
+  searchParams(): Promise<URLSearchParams>;
+
+  /**
    * The page's metadata: title, description, share tags, robots, canonical and `hreflang` links.
    * The title is absolute, since the cms already ran it through the site's title template.
-   * With a preview token it asks search engines to stay away.
+   * With a preview token, or in a live demo, it asks search engines to stay away.
    * Export it as `generateMetadata`.
    */
   metadata(): Promise<Metadata>;
@@ -96,6 +135,7 @@ export interface OhneNext<S extends Schema = UntypedSchema> {
    * The proxy every page request passes through, exported as `proxy` from `proxy.ts`.
    * It forwards the path and query to the server, and keeps a preview out of caches and search engines.
    * It also serves the editor's script at `/_ohne/cms/preview.js`, read from the API.
+   * With `sandbox` set, it relays `/_ohne/sandbox` and `/_ohne/sandbox/frame.js` for a live demo.
    */
   proxy(request: NextRequest): Promise<Response>;
 

@@ -8,6 +8,8 @@ import { useRouter } from 'next/navigation';
 import { createElement, useEffect, useRef } from 'react';
 
 const NEW_TAB = { target: '_blank', rel: 'noopener noreferrer' };
+const DEMO_FRAME = 'ohne-sandbox';
+const DEMO_SCRIPT = '/_ohne/sandbox/frame.js';
 
 /**
  * @returns {null}
@@ -18,7 +20,35 @@ export function OhnePreview() {
     if (!new URLSearchParams(location.search).has('ohne-preview')) return;
     return connect({ api: '/_ohne', keepToken: true, onRefresh: router.refresh }).dispose;
   }, [router]);
+  useEffect(() => {
+    if (window.parent === window || window.name !== DEMO_FRAME) return;
+    return joinDemo(router.refresh);
+  }, [router]);
   return null;
+}
+
+/**
+ * Loads the script the site's server relays only in a live demo, and connects it to the demo's page.
+ * On a real site the import fails, and the failure is swallowed.
+ *
+ * @param {() => void} onRefresh
+ * @returns {() => void}
+ */
+function joinDemo(onRefresh) {
+  // A dynamic import resolves a path against the bundle, which a CDN may serve from another origin.
+  const url = new URL(DEMO_SCRIPT, location.href).href;
+  /** @type {{ dispose(): void } | undefined} */
+  let session;
+  let disposed = false;
+  import(/* webpackIgnore: true */ /* @vite-ignore */ url)
+    .then((module) => {
+      if (!disposed) session = module.connect({ onRefresh });
+    })
+    .catch(() => {});
+  return () => {
+    disposed = true;
+    session?.dispose();
+  };
 }
 
 /**
