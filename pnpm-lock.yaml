@@ -11,8 +11,8 @@ importers:
   .:
     devDependencies:
       '@ohnejs/client':
-        specifier: 0.2.0
-        version: 0.2.0
+        specifier: 0.3.0
+        version: 0.3.0
       '@ohnejs/cms':
         specifier: 0.3.1
         version: 0.3.1(ohnejs@0.2.0)
@@ -73,7 +73,7 @@ importers:
     dependencies:
       '@ohnejs/next':
         specifier: workspace:*
-        version: file:(@ohnejs/client@0.2.0)(@types/react@19.0.14)(next@16.0.0(@types/react@19.0.14)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
+        version: file:(@ohnejs/client@0.3.0)(@types/react@19.0.14)(next@16.0.0(@types/react@19.0.14)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)
       next:
         specifier: 16.0.0
         version: 16.0.0(@types/react@19.0.14)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -523,8 +523,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@ohnejs/client@0.2.0':
-    resolution: {integrity: sha512-a0T7bYEa/MnZMmOSTt5tafaUQOTsSpDoZOwbz0jqxv4m7zDyQWjd9mLk/ILi8HLpnb0K2fku6NTH/bgNjyLQ7A==}
+  '@ohnejs/client@0.3.0':
+    resolution: {integrity: sha512-f9xKnDVbw/9OvH7e0Iizfy1zpnNDiBxypSpRHJ6/XENi7yhVFDYe93FsgS54u4kJ7KGV7eH/kZ8LqPo5DQDcSQ==}
     engines: {node: '>=20.0.0'}
 
   '@ohnejs/cms@0.3.1':
@@ -537,7 +537,7 @@ packages:
     resolution: {directory: '', type: directory}
     engines: {node: '>=20.9.0'}
     peerDependencies:
-      '@ohnejs/client': '>=0.2.0 <0.3.0-0'
+      '@ohnejs/client': '>=0.3.0 <0.4.0-0'
       '@types/react': '>=19.0.0 <20.0.0-0'
       next: '>=16.0.0 <17.0.0-0'
       react: '>=19.0.0 <20.0.0-0'
@@ -1377,15 +1377,15 @@ snapshots:
   '@next/swc-win32-x64-msvc@16.4.2':
     optional: true
 
-  '@ohnejs/client@0.2.0': {}
+  '@ohnejs/client@0.3.0': {}
 
   '@ohnejs/cms@0.3.1(ohnejs@0.2.0)':
     dependencies:
       ohnejs: 0.2.0
 
-  '@ohnejs/next@file:(@ohnejs/client@0.2.0)(@types/react@19.0.14)(next@16.0.0(@types/react@19.0.14)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)':
+  '@ohnejs/next@file:(@ohnejs/client@0.3.0)(@types/react@19.0.14)(next@16.0.0(@types/react@19.0.14)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)':
     dependencies:
-      '@ohnejs/client': 0.2.0
+      '@ohnejs/client': 0.3.0
       next: 16.0.0(@types/react@19.0.14)(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       react: 19.0.0
     optionalDependencies:
