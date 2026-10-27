@@ -40,7 +40,7 @@
   },
   "devDependencies": {
     "@ohnejs/client": "0.3.0",
-    "@ohnejs/cms": "0.4.2",
+    "@ohnejs/cms": "0.4.3",
     "@types/node": "26.0.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
