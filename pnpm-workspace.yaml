@@ -1,6 +1,7 @@
 packages:
   - tests/fixture
   - tests/floor
+  - tests/routes
 
 allowBuilds:
   sharp: false

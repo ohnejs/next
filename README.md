@@ -349,6 +349,83 @@ reads come from the cache; without it, pass `prefetch={false}` where that matter
 `OHNE_API` may be an address only your server reaches, since the browser loads everything through
 your site. Set `API_URL` on the CMS to its public address, so the files a page links to carry it.
 
+## Without the CMS
+
+A site that only calls your API's own routes, like a customer account, needs no CMS. The browser
+then calls your API under a path on your site, so give the API one with
+[`api.basePath`](https://ohne.dev/docs/project/config#the-api-server), like `'/api'`, and name your
+API with that path:
+
+```ts
+// lib/api.ts
+import { createOhneAPI } from '@ohnejs/next';
+
+import type { Routes } from '../ohne';
+
+export const api = createOhneAPI<Routes>({
+  api: process.env.OHNE_API ?? 'http://localhost:9001/api',
+});
+```
+
+The proxy serves your API at that path on your site, so the session cookie belongs to your site and
+no CORS is needed:
+
+```ts
+// proxy.ts
+import { api } from './lib/api';
+
+export const proxy = api.proxy;
+
+export const config = { matcher: '/api/:path*' };
+```
+
+A Server Component calls any route by its id, and a Server Action signs the visitor in:
+
+```tsx
+// app/account/page.tsx
+import { api } from '../../lib/api';
+
+export default async function Account() {
+  const user = await api.user();
+  const posts = await api.call('GET /posts', { query: { tag: 'news' } });
+  return (
+    <main>
+      {user && <p>Signed in as {user.email}</p>}
+      {posts.map((post) => (
+        <p key={post.title}>{post.title}</p>
+      ))}
+    </main>
+  );
+}
+```
+
+```ts
+// app/account/actions.ts
+'use server';
+
+import { revalidatePath } from 'next/cache';
+
+import { api } from '../../lib/api';
+
+export async function signIn(form: FormData) {
+  await api.login({ email: String(form.get('email')), password: String(form.get('password')) });
+  revalidatePath('/account');
+}
+```
+
+- Each call carries the visitor's cookie, language and address, and is never cached. For the
+  address to reach your API's limits, see [Forms](#forms).
+- In a Server Action or a route handler, `api.login` and `api.logout` set the visitor's cookie. A
+  Server Component cannot set cookies.
+- A Client Component calls `createAPI` from `@ohnejs/client` with the path, like
+  `createAPI<Routes>({ api: '/api' })`.
+- What `login` resolves and what a failed call throws:
+  [Calling your API](https://github.com/ohnejs/client#calling-your-api).
+
+To type every call, have your backend write its routes into `ohne.ts`, as
+[Typing your routes](https://ohne.dev/docs/project/monorepo#typing-your-routes) shows. Without it,
+every call answers `unknown`.
+
 ## Docs
 
 [Frameworks](https://ohne.dev/docs/cms/frameworks#next) walks through a whole site.

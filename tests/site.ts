@@ -40,13 +40,32 @@ async function freePort() {
 }
 
 /**
- * Runs `next start` in `dir` with `env` and waits until it answers.
+ * Runs `next start` in `dir` with `env` and waits until `ready` answers.
  */
-export async function start(dir: string, env: Record<string, string>) {
+export function start(dir: string, env: Record<string, string>, ready = '/legal') {
+  return serve('start', dir, env, ready);
+}
+
+/**
+ * Runs `next dev` in `dir` with `env` and waits until `ready` answers.
+ */
+export function dev(dir: string, env: Record<string, string>, ready = '/') {
+  return serve('dev', dir, env, ready);
+}
+
+/**
+ * Runs `next <command>` in `dir` with `env` and waits until `ready` answers.
+ */
+async function serve(
+  command: 'start' | 'dev',
+  dir: string,
+  env: Record<string, string>,
+  ready: string,
+) {
   const port = await freePort();
   const child = spawn(
     join(dir, 'node_modules/.bin/next'),
-    ['start', '-p', String(port), '-H', '127.0.0.1'],
+    [command, '-p', String(port), '-H', '127.0.0.1'],
     {
       cwd: dir,
       env: bare(env),
@@ -57,9 +76,9 @@ export async function start(dir: string, env: Record<string, string>) {
   child.stderr.on('data', (chunk) => (log += chunk));
   const origin = `http://127.0.0.1:${port}`;
   for (;;) {
-    if (child.exitCode !== null) throw new Error(`next start exited: ${log}`);
+    if (child.exitCode !== null) throw new Error(`next ${command} exited: ${log}`);
     try {
-      await fetch(`${origin}/legal`);
+      await (await fetch(`${origin}${ready}`)).body?.cancel();
       break;
     } catch {
       await new Promise((resolve) => setTimeout(resolve, 100));

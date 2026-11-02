@@ -1,6 +1,7 @@
+/** @import { API } from '@ohnejs/client' */
 /** @import { ReactNode } from 'react' */
-/** @import { BlockValue, Current, Loaded, OhneBlocksProps, OhneNext, OhneNextOptions } from './index.d.ts' */
-import { createOhne, verifyWebhook } from '@ohnejs/client';
+/** @import { BlockValue, Current, Loaded, OhneAPI, OhneAPIOptions, OhneBlocksProps, OhneNext, OhneNextOptions } from './index.d.ts' */
+import { createAPI, createOhne, verifyWebhook } from '@ohnejs/client';
 import { revalidateTag } from 'next/cache';
 import { cookies, headers } from 'next/headers';
 import { notFound, permanentRedirect, redirect } from 'next/navigation';
@@ -15,6 +16,7 @@ const PREVIEW = `${RELAY}/cms/preview.js`;
 const SANDBOX_ROUTES = [`${RELAY}/sandbox`, `${RELAY}/sandbox/frame.js`];
 const PASSED = ['cache-control', 'content-type'];
 const VISITOR = ['x-forwarded-for', 'accept-language'];
+const CALLER = ['cookie', ...VISITOR];
 const RSC = /^_rsc(=|$)/;
 const SANDBOX_ID = /^[A-Za-z0-9_-]{1,64}$/;
 
@@ -78,6 +80,112 @@ async function visitorHeaders(outgoing) {
     const value = incoming.get(name);
     if (value !== null && !outgoing.has(name)) outgoing.set(name, value);
   }
+}
+
+/**
+ * Sets each cookie a response sets on the visitor, where Next lets a request write cookies.
+ * It answers each cookie's raw value by name, `undefined` for one the response expired, or nothing.
+ *
+ * @param {Response} response
+ * @returns {Promise<Map<string, string | undefined> | undefined>}
+ */
+async function relayCookies(response) {
+  const set = response.headers.getSetCookie();
+  if (set.length === 0) return undefined;
+  const jar = await cookies();
+  const parsed = new NextResponse(null, { headers: set.map((value) => ['set-cookie', value]) });
+  const written = new Map();
+  try {
+    for (const cookie of parsed.cookies.getAll()) jar.set(cookie);
+  } catch {
+    // A Server Component renders after the response headers went out, so Next refuses the write.
+    return undefined;
+  }
+  for (const line of set) {
+    const pair = line.split(';', 1)[0] ?? '';
+    const name = pair.slice(0, pair.indexOf('=')).trim();
+    const cookie = parsed.cookies.get(name);
+    const expired =
+      cookie?.maxAge === 0 || (cookie?.expires !== undefined && +cookie.expires <= Date.now());
+    written.set(name, expired ? undefined : pair.slice(pair.indexOf('=') + 1).trim());
+  }
+  return written;
+}
+
+/**
+ * The `cookie` header `raw` with each cookie in `written` replaced, added, or dropped when expired.
+ * Every other cookie keeps its bytes.
+ *
+ * @param {string | null} raw
+ * @param {Map<string, string | undefined>} written
+ * @returns {string}
+ */
+function withWritten(raw, written) {
+  const kept = (raw ?? '')
+    .split(';')
+    .map((pair) => pair.trim())
+    .filter((pair) => pair !== '' && !written.has(pair.slice(0, pair.indexOf('=')).trim()));
+  for (const [name, value] of written) if (value !== undefined) kept.push(`${name}=${value}`);
+  return kept.join('; ');
+}
+
+/**
+ * @param {OhneAPIOptions} options
+ * @returns {OhneAPI}
+ */
+export function createOhneAPI(options) {
+  const url = URL.parse(options.api);
+  const path = url?.pathname.replace(/\/+$/, '') ?? '';
+  if (!url || path === '') {
+    throw new Error(
+      `\`@ohnejs/next\` calls your API at its path on the site, which \`${options.api}\` lacks: set \`api.basePath\` in your API's \`ohne.config.ts\`, like \`'/api'\`, and name it in \`api\`, like \`'http://localhost:9001/api'\``,
+    );
+  }
+  const { origin } = url;
+  /** @type {WeakMap<Headers, Map<string, string | undefined>>} */
+  const writes = new WeakMap();
+
+  /**
+   * A client that sends the visitor's headers, read before a call so Next sees a page needs them.
+   * A cookie an earlier call of the same request set counts, as the browser will send it next.
+   *
+   * @returns {Promise<API>}
+   */
+  async function visitor() {
+    const incoming = await headers();
+    /** @type {Record<string, string>} */
+    const forwarded = {};
+    for (const name of CALLER) {
+      const value = incoming.get(name);
+      if (value !== null) forwarded[name] = value;
+    }
+    const written = writes.get(incoming);
+    if (written) forwarded.cookie = withWritten(incoming.get('cookie'), written);
+    if (forwarded.cookie === '') delete forwarded.cookie;
+    return createAPI({
+      api: `${origin}${path}`,
+      fetchInit: { headers: forwarded },
+      fetch: async (input, init) => {
+        const response = await fetch(input, { ...init, cache: 'no-store' });
+        const set = await relayCookies(response);
+        if (set) writes.set(incoming, new Map([...(writes.get(incoming) ?? []), ...set]));
+        return response;
+      },
+    });
+  }
+
+  return {
+    call: async (route, ...options) => (await visitor()).call(route, ...options),
+    login: async (input) => (await visitor()).login(input),
+    logout: async () => (await visitor()).logout(),
+    user: async () => (await visitor()).user(),
+
+    proxy(request) {
+      const { pathname, search } = new URL(request.url);
+      if (pathname !== path && !pathname.startsWith(`${path}/`)) return NextResponse.next();
+      return NextResponse.rewrite(`${origin}${pathname}${search}`);
+    },
+  };
 }
 
 /**

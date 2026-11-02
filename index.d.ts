@@ -1,6 +1,15 @@
-import type { Ohne, Resolved, ResolvedPage, Schema, UntypedSchema } from '@ohnejs/client';
+import type {
+  API,
+  Ohne,
+  Resolved,
+  ResolvedPage,
+  RouteMap,
+  Schema,
+  UntypedRoutes,
+  UntypedSchema,
+} from '@ohnejs/client';
 import type { Metadata } from 'next';
-import type { NextRequest } from 'next/server';
+import type { NextRequest, NextResponse } from 'next/server';
 import type { JSX, ReactNode } from 'react';
 
 /**
@@ -175,6 +184,49 @@ export interface OhneNext<S extends Schema = UntypedSchema> {
 export function createOhneNext<S extends Schema = UntypedSchema>(
   options: OhneNextOptions,
 ): OhneNext<S>;
+
+/**
+ * Options for `createOhneAPI`.
+ */
+export interface OhneAPIOptions {
+  /**
+   * The address of your ohne API, its `api.basePath` included, like `'http://localhost:9001/api'`.
+   * Only the server reads it, so it may be an address on a private network.
+   * The browser calls that path on the site instead, which `proxy` serves.
+   */
+  api: string;
+}
+
+/**
+ * A client of your API's own routes for a Next.js site, as `createAPI` makes it.
+ * Each call sends the visitor's cookie, language and address, and is never cached.
+ * In a Server Action or a route handler, a sign-in or a sign-out sets the visitor's cookie.
+ */
+export interface OhneAPI<R extends RouteMap = UntypedRoutes> extends API<R> {
+  /**
+   * The proxy that serves your API at its path on the site, exported as `proxy` from `proxy.ts`.
+   * The browser then calls the site, so the session cookie belongs to it and no CORS is needed.
+   * It passes every other request on.
+   */
+  proxy(request: NextRequest): NextResponse;
+}
+
+/**
+ * Connects a Next.js site to your API's own routes at `options.api`, without a CMS.
+ * Pass the `Routes` your API writes, as `createOhneAPI<Routes>`, to type every call.
+ * Import it in Server Components, Server Actions, route handlers and `proxy.ts`.
+ * A Client Component calls `createAPI` from `@ohnejs/client` with the path, like `'/api'`.
+ *
+ * @example
+ * ```ts
+ * const api = createOhneAPI<Routes>({ api: 'http://localhost:9001/api' })
+ *
+ * await api.call('GET /sites', { query: { client: 'acme' } }) // -> [{ code: 'a', name: 'Acme' }]
+ * ```
+ */
+export function createOhneAPI<R extends RouteMap = UntypedRoutes>(
+  options: OhneAPIOptions,
+): OhneAPI<R>;
 
 /**
  * A block as a page carries it, before its name narrows it.
