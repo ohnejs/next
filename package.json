@@ -39,7 +39,7 @@
     "typecheck": "tsc && tsc -p tsconfig.js.json && pnpm --filter fixture exec next typegen && pnpm --filter fixture exec tsc --noEmit && pnpm --filter routes exec next typegen && pnpm --filter routes exec tsc --noEmit"
   },
   "devDependencies": {
-    "@ohnejs/client": "0.3.0",
+    "@ohnejs/client": "0.4.0",
     "@ohnejs/cms": "0.5.0",
     "@types/node": "26.0.0",
     "@types/react": "19.3.0",

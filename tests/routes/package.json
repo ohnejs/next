@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@ohnejs/client": "0.3.0",
+    "@ohnejs/client": "0.4.0",
     "@ohnejs/next": "workspace:*",
     "next": "16.4.2",
     "react": "19.3.1",
