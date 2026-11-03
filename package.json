@@ -1,6 +1,6 @@
 {
   "name": "@ohnejs/next",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Renders the pages of an ohne CMS in Next.js: redirects, 404s, metadata and the live preview. Calls your ohne API.",
   "homepage": "https://ohne.dev/docs/cms/frameworks#next",
   "license": "MIT",
