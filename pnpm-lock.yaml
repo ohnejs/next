@@ -14,8 +14,8 @@ importers:
         specifier: 0.4.0
         version: 0.4.0
       '@ohnejs/cms':
-        specifier: 0.7.1
-        version: 0.7.1(ohnejs@0.9.0)
+        specifier: 0.7.2
+        version: 0.7.2(ohnejs@0.10.0)
       '@types/node':
         specifier: 26.0.0
         version: 26.0.0
@@ -29,8 +29,8 @@ importers:
         specifier: 16.4.3
         version: 16.4.3(@types/node@26.0.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       ohnejs:
-        specifier: 0.9.0
-        version: 0.9.0
+        specifier: 0.10.0
+        version: 0.10.0
       oxfmt:
         specifier: 0.74.0
         version: 0.74.0
@@ -613,11 +613,11 @@ packages:
     resolution: {integrity: sha512-4vgN1PAKpk3nps+uVuRfPvfYg95x4Mq7rQZG/DTHqcWNPjvDB6OBo1Lg8BDfLenjY66csMxGug2Gh+vxPynnRA==}
     engines: {node: '>=20.0.0'}
 
-  '@ohnejs/cms@0.7.1':
-    resolution: {integrity: sha512-C6qAnYY2YSyl3/HR1fa6nDrfQ8smlB70YvQB6rA9pLq5reQjqg3NEvGzHCQY8BKaspGTjNYmxX5KSFY2r4SiIQ==}
+  '@ohnejs/cms@0.7.2':
+    resolution: {integrity: sha512-CaowMQeYboTsxHcCuY9zRAmSYu1N828W6arlrSvIEyU+h03ZIFdi/W2Wclvfhimw4GYVt864wPN6sexXLSpAJA==}
     engines: {node: '>=26.0.0'}
     peerDependencies:
-      ohnejs: '>=0.8.0 <0.10.0-0'
+      ohnejs: '>=0.8.0 <0.11.0-0'
 
   '@ohnejs/next@file:':
     resolution: {directory: '', type: directory}
@@ -1103,8 +1103,8 @@ packages:
       sass:
         optional: true
 
-  ohnejs@0.9.0:
-    resolution: {integrity: sha512-9Q9KCRe7NkEVocmi2PzzxZXScBzzQp0567vG0Jv9UKmr9jgxPFobCJo5yA0gfjHd1LmB6mH0EjolHLpH2tcXiw==}
+  ohnejs@0.10.0:
+    resolution: {integrity: sha512-5l4sfU36VgolyZ9wozqDZ6VuOtJgvJHrSPLNDgodaNrRz/yrbZqIEbIVa4FPuREPe5gba5Atd0fhFV/ijOBM4Q==}
     engines: {node: '>=26.0.0'}
     hasBin: true
 
@@ -1515,9 +1515,9 @@ snapshots:
 
   '@ohnejs/client@0.4.0': {}
 
-  '@ohnejs/cms@0.7.1(ohnejs@0.9.0)':
+  '@ohnejs/cms@0.7.2(ohnejs@0.10.0)':
     dependencies:
-      ohnejs: 0.9.0
+      ohnejs: 0.10.0
 
   '@ohnejs/next@file:(@ohnejs/client@0.4.0)(@types/react@19.0.14)(next@16.0.0(@types/react@19.0.14)(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(react@19.0.0)':
     dependencies:
@@ -1812,7 +1812,7 @@ snapshots:
       - '@types/node'
       - babel-plugin-macros
 
-  ohnejs@0.9.0: {}
+  ohnejs@0.10.0: {}
 
   oxfmt@0.74.0:
     dependencies:
